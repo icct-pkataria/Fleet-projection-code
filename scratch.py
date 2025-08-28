@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 
 # ===== FILES (your paths) =====
-PATH_NUTS = Path("/Users/durgeshkataria/PycharmProjects/EUPC/NUTS 3 vehicle stock 2022-2023.xlsx")
-PATH_SUMM = Path("/Users/durgeshkataria/PycharmProjects/EUPC/results_summary(in).xlsx")
-OUT_PATH  = Path("/Users/durgeshkataria/PycharmProjects/EUPC/regional_projection_2024_2045.xlsx")
+PATH_NUTS = Path("/Users/PycharmProjects/EUPC/NUTS 3 vehicle stock 2022-2023.xlsx")
+PATH_SUMM = Path("/Users/PycharmProjects/EUPC/results_summary(in).xlsx")
+OUT_PATH  = Path("/Users/PycharmProjects/EUPC/regional_projection_2024_2045.xlsx")
 
 # ===== SETTINGS =====
 YEARS_OUT = list(range(2024, 2046))   # 2024..2045 inclusive
@@ -112,7 +112,7 @@ if missing_nuts:
 nuts["ISO"] = nuts["nuts3"].astype(str).str[:2].map(CC2_TO_ISO3)
 nuts = nuts.dropna(subset=["ISO", "stock_2023_total"]).copy()
 
-# totals & shares
+# calculate totals & shares
 totals_2023 = nuts.groupby("ISO", as_index=False).agg(
     country_total_2023=("stock_2023_total", "sum"),
     country_ev_2023=("stock_2023_ev", "sum"),
@@ -160,16 +160,6 @@ def row_shares(df):
 bev_row_sh  = row_shares(bev_rows)
 phev_row_sh = row_shares(phev_rows)
 
-# BEV intensities collapsed to one row per Vehicle
-if not bev_rows.empty:
-    bev_intens = bev_rows.groupby(["ISO","CY","Vehicle"], as_index=False).apply(
-        lambda g: pd.Series({
-            "VKTpVeh_BEV": np.average(g["VKTpVeh"], weights=np.where(g["Stock"] > 0, g["Stock"], 1)),
-            "MJpKM_BEV":   np.average(g["MJpKM"],   weights=np.where(g["Stock"] > 0, g["Stock"], 1)),
-        })
-    ).reset_index(drop=True)
-else:
-    bev_intens = pd.DataFrame(columns=["ISO","CY","Vehicle","VKTpVeh_BEV","MJpKM_BEV"])
 
 # ===== build regional shares for 2024–2045 =====
 rows = []
